@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Processing Results</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            color: #333;
+        }
+        h2 {
+            color: #666;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        ul li {
+            display: inline-block;
+            margin: 10px;
+        }
+        img {
+            border-radius: 8px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        img:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        }
+        .separator {
+            height: 20px;
+            border-bottom: 1px solid #ddd;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Image Processing Results</h1>
+        <h2>Uploaded Image: {{ file_name }}</h2>
+        <ul>
+            <li><img src="{{ image_url }}" alt="{{ file_name }}" style="width: 120px; height: 120px;"></li>
+        </ul>
+        <div class="separator"></div>
+        <h2>Approximate Nearest Neighbors:</h2>
+        <ul>
+            {% for neighbor in neighbors %}
+            <li><img src="/media/{{ neighbor }}" alt="{{ neighbor }}" style="width: 120px; height: 120px;"></li>
+            {% endfor %}
+        </ul>
+    </div>
+</body>
+</html>

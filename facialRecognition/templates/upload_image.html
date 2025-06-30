@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Image</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        input[type="file"] {
+            padding: 10px;
+        }
+        button {
+            padding: 10px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        p {
+            color: red;
+            margin: 0;
+        }
+        #cameraButton {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Upload Image</h1>
+        <form id="uploadForm" method="post" enctype="multipart/form-data" action="{% url 'process_image' %}">
+            {% csrf_token %}
+            <input type="file" name="image" id="fileInput" style="display: none;" accept="image/*">
+            <button type="button" id="uploadButton">Upload from File</button>
+            <button type="button" id="cameraButton">Capture from Camera</button>
+            <button type="reset" id="resetButton">Reset</button>
+            <button type="button" id="submitButton">Submit</button>
+        </form>
+        {% if error %}
+        <p>{{ error }}</p>
+        {% endif %}
+    </div>
+
+    <script>
+        document.getElementById('uploadButton').addEventListener('click', function() {
+            document.getElementById('fileInput').click();
+            document.getElementById('submitButton').style.display = 'inline-block';
+            document.getElementById('resetButton').style.display = 'inline-block';
+        });
+
+        document.getElementById('fileInput').addEventListener('change', function() {
+            document.getElementById('submitButton').style.display = 'inline-block'; // Show submit button when file selected
+        });
+
+        document.getElementById('cameraButton').addEventListener('click', function() {
+            // Access the camera and capture an image immediately
+            navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(stream) {
+                var video = document.createElement('video');
+                var canvas = document.createElement('canvas');
+                var ctx = canvas.getContext('2d');
+
+                video.srcObject = stream;
+                video.play();
+
+                video.addEventListener('canplay', function() {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    
+                    // Convert the canvas image to a Blob
+                    canvas.toBlob(function(blob) {
+                        var file = new File([blob], 'image.jpg');
+                        var formData = new FormData();
+                        formData.append('image', file);
+
+                        var xhr = new XMLHttpRequest();
+                        xhr.open('POST', '{% url "process_image" %}', true);
+                        xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+                        xhr.onload = function() {
+                            // Handle response
+                            var response = JSON.parse(xhr.responseText);
+                            if (xhr.status === 200) {
+                                // Redirect to show_results.html with the received data
+                                window.location.href = '/show_results?file_name=' + response.file_name + '&image_url=' + response.image_url;
+                            } else {
+                                console.error('Error processing image:', xhr.statusText);
+                            }
+                        };
+                        xhr.onerror = function() {
+                            console.error('Error uploading image:', xhr.statusText);
+                        };
+                        xhr.send(formData);
+                    }, 'image/jpeg');
+
+                    document.getElementById('submitButton').style.display = 'inline-block'; // Show submit button
+                    stream.getTracks().forEach(function(track) {
+                        track.stop();
+                    });
+                });
+            })
+            .catch(function(error) {
+                console.error('Error accessing camera:', error);
+            });
+        });
+
+        document.getElementById('resetButton').addEventListener('click', function() {
+            document.getElementById('fileInput').value = ''; // Clear file input
+            document.getElementById('submitButton').style.display = 'none'; // Hide submit button
+        });
+
+        document.getElementById('submitButton').addEventListener('click', function() {
+            document.getElementById('uploadForm').submit(); // Submit the form when submit button clicked
+        });
+    </script>
+</body>
+</html>

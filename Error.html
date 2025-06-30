@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Image</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        input[type="file"] {
+            padding: 10px;
+        }
+        button {
+            padding: 10px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        p {
+            color: red;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Upload Image</h1>
+        <form method="post" enctype="multipart/form-data" action="{% url 'process_image' %}">
+            {% csrf_token %}
+            <input type="file" name="image" id="fileInput" style="display: none;" accept="image/*">
+            <button type="button" id="uploadButton">Upload from File</button>
+            <button type="button" id="cameraButton">Capture from Camera</button>
+            <button type="submit" style="display: none;" id="submitButton">Upload</button>
+            <button type="reset" style="display: none;" id="resetButton">Reset</button>
+        </form>
+        {% if error %}
+        <p>{{ error }}</p>
+        {% endif %}
+    </div>
+
+    <script>
+        document.getElementById('uploadButton').addEventListener('click', function() {
+            document.getElementById('fileInput').click();
+            document.getElementById('submitButton').style.display = 'inline-block';
+            document.getElementById('resetButton').style.display = 'inline-block';
+        });
+
+        document.getElementById('fileInput').addEventListener('change', function() {
+            // You can add additional logic here if needed
+            // For example, you might want to display a preview of the selected image
+        });
+
+        document.getElementById('cameraButton').addEventListener('click', function() {
+            navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(stream) {
+                var video = document.createElement('video');
+                var canvas = document.createElement('canvas');
+                var ctx = canvas.getContext('2d');
+
+                video.srcObject = stream;
+                video.play();
+
+                video.addEventListener('canplay', function() {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    canvas.toBlob(function(blob) {
+                        var file = new File([blob], 'image.jpg');
+                        var formData = new FormData();
+                        formData.append('image', file);
+
+                        fetch('{% url "process_image" %}', {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            }
+                        })
+                        .then(function(response) {
+                            // Handle response
+                        })
+                        .catch(function(error) {
+                            console.error('Error uploading image:', error);
+                        })
+                        .finally(function() {
+                            stream.getTracks().forEach(function(track) {
+                                track.stop();
+                            });
+                        });
+                    }, 'image/jpeg');
+                });
+            })
+            .catch(function(error) {
+                console.error('Error accessing camera:', error);
+            });
+        });
+    </script>
+</body>
+</html>
