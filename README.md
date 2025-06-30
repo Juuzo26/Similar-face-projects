@@ -25,7 +25,7 @@ Django 3.2.x
 
 
 Deep Learning
-TensorFlow + Keras (EfficientNetB0)
+TensorFlow + Keras (EfficientNetB0) trained from the dataset Labeled Faces in the Wild (LFW
 
 
 Face Detection
